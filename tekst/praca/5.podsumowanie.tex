@@ -1,0 +1,26 @@
+\chapter{Conclusions}
+\label{ch:podsumowanie}
+
+This paper presented the implementation and comparative evaluation of Regularized and Selective DeePC applied to position control of a nonlinear five-bar parallel robot. The cut-joint method proved an effective and modular framework for deriving joint-space dynamics of closed kinematic chains. The following conclusions are drawn from the simulation studies:
+
+\begin{enumerate}
+    \item \textbf{Data quality dependency:} Under ideal conditions, both controllers achieve high tracking precision. The introduction of measurement noise causes significant quality degradation in both variants, confirming that data-driven methods are critically sensitive to the quality of the offline Hankel matrix dataset.
+
+    \item \textbf{Regularized DeePC:} This method operates conservatively, generating smooth control signals with low rate of change. While beneficial for real hardware implementation, this filtering effect introduces steady-state bias and corner cutting on sharp trajectory turns, a limitation that is substantially amplified under noise.
+
+    \item \textbf{Selective DeePC:} Local linearization via nearest-neighbor data selection reproduces sharp trajectory changes with significantly higher geometric fidelity and lower mean tracking error. The trade-off is reduced stability in data-sparse workspace regions, manifesting as control signal oscillations and occasional local destabilization.
+
+    \item \textbf{Computational performance:} The reduction of the QP problem dimension to $N_{cols}$ yields a sevenfold decrease in computation time relative to the Regularized method (from $\approx 100\,\mathrm{ms}$ to $\approx 14\,\mathrm{ms}$), positioning Selective DeePC as the more viable candidate for real-time control applications.
+
+    \item \textbf{Hyperparameter transferability:} Parameters tuned on a smooth training trajectory successfully generalize to the more demanding polygon test case, suggesting that the optimal configuration is primarily governed by robot dynamics rather than specific trajectory excitation.
+\end{enumerate}
+
+\section{Future Work}
+
+The results motivate the following directions for further research:
+
+\begin{enumerate}
+    \item \textbf{Experimental verification:} Deployment of Selective DeePC on a physical laboratory setup, requiring real training data collection and validation of noise robustness under hardware disturbances.
+    \item \textbf{Stabilization of the selective method:} Development of continuity conditions for the data selection algorithm to prevent abrupt changes in the local Hankel matrix structure, with the aim of eliminating the observed oscillatory behavior in data-sparse regions.
+    \item \textbf{Implementation optimization:} Evaluation of alternative QP solvers (e.g., OSQP) and lower-level code translation to verify strict real-time feasibility.
+\end{enumerate}

@@ -1,0 +1,179 @@
+\chapter{Dynamics Analysis of the Parallel Robot}
+\label{ch:model_dynamiczny}
+
+This chapter presents the mathematical model that serves as the foundation for the synthesis of predictive controllers. The subject of research is a parallel robot structure with design parameters of the Quanser "2 DOF ROBOT" \cite{quanser, kkr}, which is a planar five-bar linkage mechanism characterized by nonlinear dynamics. The robot dynamics are described in joint coordinates using the cut-joint method \cite{nikravesh}.
+
+\section{General Formulation of the Dynamics Problem}
+\label{sec:teoria_ogolna}
+
+Following \cite{nikravesh}, the dynamics of the closed-loop mechanism are formulated by virtually cutting the kinematic loop, yielding a set of open chains governed by holonomic constraints:
+\begin{equation}
+    \label{eq:general_loop_constraint}
+    \boldsymbol{\Phi}(\boldsymbol{q}) = \boldsymbol{0}
+\end{equation}
+Differentiating with respect to time yields the constraint at the velocity level:
+\begin{equation}
+    \label{eq:D_matrix_beg}
+    \mathbf{D}\boldsymbol{\dot q} = \boldsymbol{0}
+\end{equation}
+where $\mathbf{D} = \frac{\partial \boldsymbol{\Phi}}{\partial \boldsymbol{q}}$. Introducing the velocity transformation matrix $\mathbf{B}$ such that $\boldsymbol{\dot q}= \mathbf{B}\boldsymbol{\dot \theta}$, the joint-space Jacobian is defined as:
+\begin{equation}
+    \label{eq:C_matrix_beg}
+    \mathbf{C}=\mathbf{D}\mathbf{B}
+\end{equation}
+and the acceleration-level constraint follows as:
+\begin{equation}
+    \label{eq:acceleration_constraint}
+    \mathbf{C}\boldsymbol{\ddot \theta} + \mathbf{\dot C}\boldsymbol{\dot \theta}= \boldsymbol{0}
+\end{equation}
+The equations of motion with constraint reaction forces (Lagrange multipliers $\boldsymbol{\prescript{\star}{}{}\lambda}$) take the DAE form:
+\begin{equation}
+    \label{eq:general_DAE}
+    \begin{bmatrix}
+        \boldsymbol{M}_{joint}&-\mathbf{C}^\mathrm{T}\\
+        \mathbf{C}&\boldsymbol{0}
+    \end{bmatrix}
+    \begin{bmatrix}
+        \boldsymbol{\ddot\theta}\\
+        \prescript{\star}{}{}\boldsymbol{\lambda}
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+        \prescript{(a)}{}{\boldsymbol{h}_{joint}}\\
+        -\mathbf{\dot C}\boldsymbol{\dot \theta}
+    \end{bmatrix}
+\end{equation}
+where $\boldsymbol{M}_{joint} = \mathbf{B}^\mathrm{T}\boldsymbol{M}\mathbf{B}$ is the mass matrix projected onto the joint space, and $\prescript{(a)}{}{\boldsymbol{h}_{joint}}$ is the vector of generalized forces in the joint space.
+
+\section{Detailed Model of the Parallel Robot}
+\label{subch:implementacja_robot}
+
+The geometry of the mechanism with the marked virtual cut point (point C), adopted coordinate systems, and notation follow \cite{nikravesh}; key vectors are illustrated in Figure \ref{fig:wybrane_wektory}. The kinematic scheme with joint variables and the operating trajectory is shown in Figure \ref{fig:robot_rownolegly}.
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=1\linewidth]{rysunki/2.model_dynamiczny/wybrane_wektory.pdf}
+    \caption{Representation of selected vectors on the left half of the mechanism (formed by points ABC) of the parallel robot}
+    \label{fig:wybrane_wektory}
+\end{figure}
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=1\linewidth]{rysunki/2.model_dynamiczny/robot_rownolegly.pdf}
+    \caption{Kinematic scheme of the robot including coordinate systems, joint variables, and the operating trajectory (Trajectory A)}
+    \label{fig:robot_rownolegly}
+\end{figure}
+
+Direct torque control is assumed, neglecting the dynamics of the drive systems, which is a sufficient simplification for the synthesis of predictive control algorithms.
+
+\subsection{Definition of Coordinates and Constraints}
+The state variables of the system were defined as follows:
+\begin{itemize}
+    \item \textbf{Absolute coordinate vector} $\boldsymbol{q}$ (12 variables) -- contains the positions of the centers of mass $\boldsymbol{r}_i$ and orientation angles $\varphi_i$ for each of the four links:
+    \begin{equation}
+        \label{eq:vector_c}
+        \boldsymbol{q} =\begin{bmatrix}
+            \boldsymbol{r}_1^\mathrm{T} & \varphi_1 & \boldsymbol{r}_2^\mathrm{T} & \varphi_2 & \boldsymbol{r}_3^\mathrm{T} & \varphi_3 & \boldsymbol{r}_4^\mathrm{T} & \varphi_4
+        \end{bmatrix}^\mathrm{T}
+    \end{equation}
+    \item \textbf{Joint coordinate vector} $\boldsymbol{\theta}$ (4 variables) -- describes the configuration of the two open kinematic trees formed after the virtual cut at point C:
+    \begin{equation}
+        \label{eq:vector_theta}
+        \boldsymbol{\theta} = \begin{bmatrix}
+            \theta_1 & \theta_2 & \theta_3 & \theta_4
+        \end{bmatrix}^\mathrm{T}
+    \end{equation}
+\end{itemize}
+
+The constraint equation $\prescript{\star}{}{}\boldsymbol{\Phi}$ results from the loop closure condition at point C:
+\begin{equation}
+    \label{eq:Phi}
+    \begin{aligned}
+        \prescript{\star}{}{}\boldsymbol{\Phi}(\boldsymbol{q}) = \underbrace{\boldsymbol{r}_2 + \boldsymbol{s}_2^C}_{\text{ABC Chain}} &- \underbrace{(\boldsymbol{r}_3 + \boldsymbol{s}_3^C)}_{\text{EDC Chain}} = \boldsymbol{0} \\
+        \prescript{\star}{}{}\boldsymbol{\Phi}(\boldsymbol{q}) = (-\boldsymbol{s}_1^A + \boldsymbol{s}_1^B - \boldsymbol{s}_2^B + \boldsymbol{s}_2^C) &- (-\boldsymbol{s}_3^D + \boldsymbol{s}_4^D - \boldsymbol{s}_4^E + \boldsymbol{L}) - \boldsymbol{s}_3^C = \boldsymbol{0}
+    \end{aligned}
+\end{equation}
+where $\boldsymbol{L} = [2l, 0]^\mathrm{T}$ is the distance vector between the motor axes.
+
+\subsection{Determination of Structural Matrices}
+Following the general procedure of Section \ref{sec:teoria_ogolna}, the matrices necessary to construct the equations of motion (\ref{eq:general_DAE}) were determined.
+
+\textbf{Velocity transformation matrix ($\mathbf{B}$)}:
+By analyzing the topology of the open chains (revolute joints $\boldsymbol{R}_{ij}$), the matrix $\mathbf{B}$ was constructed:
+\begin{equation}
+    \label{eq:B_matrix}
+    \mathbf{B} = \begin{bmatrix}
+        \boldsymbol{R_{11}} & \boldsymbol{0}_{3\times1} &\boldsymbol{0}_{3\times1} &\boldsymbol{0}_{3\times1}\\
+        \boldsymbol{R}_{21} & \boldsymbol{R}_{22} & \boldsymbol{0}_{3\times1} & \boldsymbol{0}_{3\times1}\\ 
+        \boldsymbol{0}_{3\times1} & \boldsymbol{0}_{3\times1}&\boldsymbol{R}_{33}&\boldsymbol{R}_{34}\\
+        \boldsymbol{0}_{3\times1} & \boldsymbol{0}_{3\times1} & \boldsymbol{0}_{3\times1} & \boldsymbol{R}_{44}
+     \end{bmatrix}_{12\times4}
+\end{equation}
+The elements $\boldsymbol{R}_{ij}$ depend on the vectors $\boldsymbol{\breve d}_{ij}$; their detailed definitions and the form of $\mathbf{\dot B}$ are included in \textbf{Appendix \ref{app:szczegoly_kinematyczne}}.
+
+\textbf{Constraint Jacobian matrix ($\mathbf{D}$)}:
+Differentiating the loop equation (\ref{eq:Phi}) yields:
+\begin{equation}
+    \label{eq:vector_loop_differentiated}
+    \prescript{\star}{}{\boldsymbol{\dot \Phi}} = \boldsymbol{\dot r}_2 + \boldsymbol{\breve s}_2^C\dot \varphi_2-\boldsymbol{\dot r}_3- \boldsymbol{\breve s}_3^C\dot \varphi_3
+\end{equation}
+from which the explicit form of $\prescript{\star}{}{\mathbf{D}}$ follows:
+\begin{equation}
+    \label{eq:absolute_jacobain}
+        \prescript{\star}{}{\mathbf{D}}
+        = 
+        \begin{bmatrix}
+        \boldsymbol{0}_{2\times2} &  \boldsymbol{0}_{2\times2} & \boldsymbol{I}_{2\times2} &  \boldsymbol{\breve s}_2^C & \boldsymbol{-I}_{2\times2} & -\boldsymbol{\breve s}_3^C &  \boldsymbol{0}_{2\times2} &  \boldsymbol{0}_{2\times2}
+        \end{bmatrix}
+\end{equation}
+
+\textbf{Joint Space Jacobian matrix ($\mathbf{C}$)}:
+\begin{equation}
+    \label{eq:c_dot_matrix}
+    \mathbf{C}=\prescript{\star}{}{\mathbf{D}}\mathbf{B}, \quad \quad \mathbf{\dot C}= \prescript{\star}{}{\mathbf{D}}\mathbf{\dot B} + \prescript{\star}{}{\mathbf{\dot D}}\mathbf{B}
+\end{equation}
+
+\subsection{Final System of Dynamics Equations}
+Adopting a diagonal mass matrix $\boldsymbol{M}$ (according to Table \ref{tab:parametry_czlonu}) and a vector of applied external forces $\prescript{(a)}{}{\boldsymbol{h}}$ containing control torques $\tau_1, \tau_4$:
+\begin{equation}
+    \label{eq:mass_matrix}
+        \boldsymbol{M} = \boldsymbol{diag}(m, m,J_z, \dots, m, m, J_z)
+\end{equation}
+\begin{equation}
+    \label{eq:h_applied}
+        \prescript{(a)}{}{\boldsymbol{h}} = \begin{bmatrix}
+            0 & 0 & \tau_1 &\boldsymbol{0}_{1\times3} &\boldsymbol{0}_{1\times3}&0&0 &\tau_4
+        \end{bmatrix}^\mathrm{T}
+\end{equation}
+the joint-space projections are determined as:
+\begin{equation}
+    \label{eq:mass_matrix_joint}
+        \boldsymbol{M}_{joint} = \mathbf{B}^\mathrm{T}\boldsymbol{M}\mathbf{B}
+\end{equation}
+\begin{equation}
+    \label{eq:h_applied_joint}
+        \prescript{(a)}{}{\boldsymbol{h}}_{joint} = \mathbf{B}^\mathrm{T}(\prescript{(a)}{}{\boldsymbol{h}} -\boldsymbol{M}\mathbf{\dot B}\boldsymbol{\dot \theta})
+\end{equation}
+
+To counteract constraint drift, Baumgarte stabilization \cite{BAUMGARTE19721} was applied by augmenting the acceleration constraint (\ref{eq:acceleration_constraint}):
+\begin{equation}
+    \label{eq:baumgarte}
+    -\mathbf{\dot C}\boldsymbol{\dot \theta}_{new} = -\mathbf{\dot C}\boldsymbol{\dot \theta} -2\alpha \prescript{\star}{}{\boldsymbol{\dot\Phi}}
+    -\beta^2\prescript{\star}{}{\boldsymbol{\Phi}}
+\end{equation}
+Parameters $\alpha = \beta = 10$ were selected heuristically and effectively suppress drift to $\sim10^{-11}$ m. The model was validated against MSC Adams simulations, showing high agreement; residual differences are attributed to differing numerical integration schemes.
+
+\section{Model Parameters}
+The geometric dimensions and inertial parameters adopted for the simulation are collected in Table \ref{tab:parametry_czlonu} (based on \cite{quanser, kkr}).
+
+\begin{table}[!htbp]
+    \centering
+    \caption{Physical parameters of a single link}
+    \label{tab:parametry_czlonu}
+    \begin{tabular}{ccc}\toprule
+        \textbf{Quantity} & \textbf{Symbol} & \textbf{Value} \\\midrule
+        Link length & $l$ & $0.127\,\mathrm{m}$\\
+        Link mass & $m$ & $0.065\,\mathrm{kg}$ \\
+        Moment of inertia & $J_z$ & $9 \cdot 10^{-5}\,\mathrm{kg\cdot m^2}$ \\\bottomrule
+    \end{tabular}
+\end{table}

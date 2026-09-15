@@ -1,0 +1,297 @@
+\section{Teoria}
+
+Jak właściwie opisać ten model dynamiczny?
+należy pokazac potrzebne preliminaries matematyczne, tak aby czytelnik rozumiał całą treść, uprzednio należy jakoś spróbowac uzasadnić taki dobór rozwiązania a nie inny, a następnie należy przedstawić całe rozwiązanie równań dla mojego konkretnego mechanizmu, pytanie czy powinienem wyprowadzić wszystkie równania, czy zawrzeć to jako załącznik, co miałoby więcej sensu, aby nie zaśmiecać meritum, czyli mojego robota równoległego
+\begin{enumerate}
+    \item 
+\end{enumerate}
+
+\textcolor{red}{WSTAWIĆ RYSUNEK ROBOTA}
+\label{sec:teoria_robot}
+
+Opis dynamiki robota został oparty na formalizmie wyprowadzonym w \textcolor{red}{REFERENCJA NIKRAVESH}. Wszystkie niezbędne wzory do rozwiązania problemu postawionego jako \gls{DAE} zostaną przedstawione i wymienione w tej sekcji, natomiast w \ref{sec:implementacja_robot} zależności zostaną użyte do rozwiązania równań robota użytego do dalszych badań.
+
+Wyprowadzenie równań dynamiki, dla przypadku robota równoległego należy rozpocząć od zaznajomienia przyjętych konwencji oznaczeń i operacji według wybranej metodyki rozwiązania. Rozważania należy rozpocząć od konwencji indeksów oraz oznaczeń symboli specjalnych jak i podstawowych macierzy używanych w rozwiązaniu.
+
+Przyjęto następujące konwencje i oznaczenia:
+\begin{itemize}
+    \item Wektor $\cancel{\boldsymbol{s}}_i^O$ oznacza wektor w układzie współrzędnych ciała z którym jest związane, co oznaczone jest jako dolny indeks $i$, górny indeks natomiast oznacza punkt na który wskazuje $O$, co więcej oznaczenie $\boldsymbol{s}$ zawsze oznacza wektor lokalny
+    \begin{equation}
+        \label{eq:begin_s_cancel}
+        \cancel{\boldsymbol{s}}_{(\zeta,\eta)} = \cancel{\boldsymbol{s}} = 
+        \begin{bmatrix}
+            s_{\zeta}\\
+            s_{\eta}
+        \end{bmatrix}
+    \end{equation}
+    \item Wektor ${\boldsymbol{s}}_i^O$ oznacza to co wcześniej wymieniony wektor, z tą różnicą, że jest wyrażony w globalnym układzie współrzędnych
+    \begin{equation}
+        \label{eq:begin_s}
+        {\boldsymbol{s}}_{(x,y)} ={\boldsymbol{s}} = 
+        \begin{bmatrix}
+            s_{x}\\
+            s_{y}
+        \end{bmatrix}
+    \end{equation}
+    \item Co więcej przejście z jednego układu do drugiego odbywa się przy pomocy macierzy kosinusów kierunkowych, oznaczanej dalej jako $\mathbf{A}$
+    \begin{equation}
+        \label{eq:A_matrix}
+            \mathbf{A}(\phi)=
+            \begin{bmatrix}
+                \cos{\phi}&-\sin{\phi}\\
+                \sin{\phi}&\cos{\phi}
+            \end{bmatrix}
+    \end{equation}
+    \begin{equation}
+        \label{eq:s_transform}
+            {\boldsymbol{s}} = \mathbf{A}(\phi)\cancel{\boldsymbol{s}}
+    \end{equation}
+    \item Operator rotacji wektora jest zdefiniowany jako oznaczenie $\breve a$, zamienia miejscami elementy wektora i dodaje znak minus, efektywnie oznacza przemnożenie przez macierz kosiunsów kierunkowych, dla $\mathbf{A}(\frac{\pi}{2})$
+    \begin{equation}
+        \label{eq:breve_operator}
+            \boldsymbol{\breve a} = 
+            \boldsymbol{a}\mathbf{A}(\frac{\pi}{2})=
+            \begin{bmatrix}
+                a_1\\a_2
+            \end{bmatrix}
+            \begin{bmatrix}
+                0&-1\\1&0
+            \end{bmatrix}
+            =
+            \begin{bmatrix}
+                -a_2\\a_1
+            \end{bmatrix}
+    \end{equation}
+    \item Poprzez oznaczenie $\mathbf{B}$ rozumie się macierz \textit{transformacji prędkości}, która wynika ze zróżniczkowania współrzędnych absolutnych $\boldsymbol{c}$ wyrażonych we współrzędnych złączowych, jest to macierz przejścia prędkości z jednego układu na drugi:
+    \begin{equation}
+        \label{eq:B_matrix_origin}
+            \begin{aligned}
+                \boldsymbol{c} &= \boldsymbol{c(\boldsymbol{\theta)}}\\
+                \boldsymbol{\dot c} & = \mathbf{B}\boldsymbol{\dot \theta}
+            \end{aligned}
+    \end{equation}
+    \item Poprzez oznaczenie $\mathbf{D}$ rozumie się macierz Jakobiego dla układu opisanego we współrzędnych absolutnych, natomiast poprzez $\mathbf{C}$ rozumie się macierz Jakobiego we współrzędnych złączowych, łączą je następujące przekształcenia, zaczynając od wyprowadzenia Jakobianu i podstawiając równanie \ref{eq:B_matrix_origin}:
+    \begin{equation}
+        \label{eq:C_D_matrices}
+        \begin{aligned}
+            \boldsymbol{\dot\Phi} = \mathbf{D}\boldsymbol{\dot c}=\boldsymbol{0}\\
+            \mathbf{D}\mathbf{B}\boldsymbol{\dot\theta}=\boldsymbol{0}\\
+            \mathbf{C} = \mathbf{D}\mathbf{B}
+        \end{aligned}
+    \end{equation}
+\end{itemize}
+
+
+Lista niezbędnych wzorów:
+\begin{itemize}
+    \item Wektor $\boldsymbol{\theta}$, który zawiera w sobie wszystkie współrzędne przegubowe, które stają się wolne w procesie "cut-joint", przecięcia przegubu
+        \begin{equation}
+            \label{eq:vector_theta}
+            \boldsymbol{\theta} = \begin{bmatrix}
+                                    \theta_1\\
+                                    \theta_2\\
+                                    \theta_3\\
+                                    \theta_4
+                                  \end{bmatrix}
+        \end{equation}
+    \item Wektor $\boldsymbol{c}$, opisujący układ we współrzędnych absolutnych
+        \begin{equation}
+            \label{eq:vector_c}
+            \boldsymbol{c} =\begin{bmatrix}
+                              \boldsymbol{r}_1\\
+                              \varphi_1\\
+                              \boldsymbol{r}_2\\
+                              \varphi_2\\
+                              \boldsymbol{r}_3\\
+                              \varphi_3\\
+                              \boldsymbol{r}_4\\
+                              \varphi_4\\
+                            \end{bmatrix}
+        \end{equation}
+    \item Równania opisujące przejście ze współrzędnych złączowych w absolutne
+        \begin{equation}
+            \label{eq:transfer_equations}
+            \begin{aligned}
+            \varphi_1 &=\theta_1 && \boldsymbol{r}_1 = \boldsymbol{r}_0^A-\boldsymbol{s}_1^A\\
+            \varphi_2 &= \varphi_1+\theta_2 && \boldsymbol{r}_2 = \boldsymbol{r}_1+\boldsymbol{s}_1^B-\boldsymbol{s}_2^B\\
+            \varphi_3 &= \varphi_4+\theta_3 && \boldsymbol{r}_3 = \boldsymbol{r}_4 + \boldsymbol{s}_4^D-\boldsymbol{s}_3^D\\
+            \varphi_4 &= \theta_4 && \boldsymbol{r}_4 = \boldsymbol{r}_0^E-\boldsymbol{s}_4^E\\
+            \end{aligned}
+        \end{equation}
+    \item W ogólności element $\boldsymbol{R}_{ij}$ oznacza obrót ciała i-tego względem przegubu j-tego, gdzie $\boldsymbol{d}_{ij}$ oznacza odległość od j-tego przgubu do i-tego ciała:
+        \begin{equation}
+            \label{eq:rij}
+                \boldsymbol{R}_{ij}
+                =
+                \begin{bmatrix}
+                    \boldsymbol{\breve d}_{ij}\\1
+                \end{bmatrix}
+        \end{equation}
+    \item Odpowiednie wektory d:
+        \begin{equation}
+            \label{eq:set_of_breve_d}
+            \begin{aligned}
+             \boldsymbol{\breve d}_{11}& = -\boldsymbol{\breve s}_1^A\\
+             \boldsymbol{\breve d}_{21}&=-\boldsymbol{\breve s}_1^A+\boldsymbol{\breve s}_1^B-\boldsymbol{\breve s}_2^B\\
+             \boldsymbol{\breve d}_{22}&=-\boldsymbol{\breve s}_2^B\\
+             \boldsymbol{\breve d}_{33}&=-\boldsymbol{\breve s}_3^D\\
+             \boldsymbol{\breve d}_{34}&=-\boldsymbol{\breve s}_4^E+\boldsymbol{\breve s}_4^D-\boldsymbol{\breve s}_3^D\\
+             \boldsymbol{\breve d}_{44}&=-\boldsymbol{\breve s}_4^E\\
+            \end{aligned}
+        \end{equation}
+    \item Następnie pochodne tych wektorów z \ref{eq:set_of_breve_d}
+        \begin{equation}
+            \label{eq:diff_set_of_breve_d}
+            \begin{aligned}
+             \boldsymbol{\dot{\breve{d}}}_{11}& = \boldsymbol{s}_1^A\dot \varphi_1\\
+             \boldsymbol{\dot{\breve{d}}}_{21}&=\boldsymbol{s}_1^A \dot \varphi_1-\boldsymbol{s}_1^B \dot \varphi_1+\boldsymbol{s}_2^B \dot \varphi_2\\
+             \boldsymbol{\breve d}_{22}&=\boldsymbol{s}_2^B \dot \varphi_2\\
+             \boldsymbol{\breve d}_{33}&=\boldsymbol{s}_3^D \dot \varphi_3\\
+             \boldsymbol{\breve d}_{34}&=\boldsymbol{s}_4^E \dot \varphi_4-\boldsymbol{s}_4^D\dot \varphi_4+\boldsymbol{s}_3^D\dot \varphi_3\\
+             \boldsymbol{\breve d}_{44}&=\boldsymbol{s}_4^E\dot \varphi_4\\
+            \end{aligned}
+        \end{equation}
+    \item Macierz $\boldsymbol{B}$ transformacji prędkości z układu złączowego do absolutnego
+        \begin{equation}
+            \label{eq:B_matrix}
+            \boldsymbol{B} = \begin{bmatrix}
+                                \boldsymbol{R_{11}} & \boldsymbol{0}_{3\times1} &\boldsymbol{0}_{3\times1} &\boldsymbol{0}_{3\times1}\\
+                                \boldsymbol{R}_{21} & \boldsymbol{R}_{22} & \boldsymbol{0}_{3\times1} & \boldsymbol{0}_{3\times1}\\ 
+                                \boldsymbol{0}_{3\times1} & \boldsymbol{0}_{3\times1}&\boldsymbol{R}_{33}&\boldsymbol{R}_{34}\\
+                                \boldsymbol{0}_{3\times1} & \boldsymbol{0}_{3\times1} & \boldsymbol{0}_{3\times1} & \boldsymbol{R}_{44}
+                             \end{bmatrix}_{12\times4}
+        \end{equation}
+    \item Prędkość ciał w układzie absolutnym
+        \begin{equation}
+            \label{eq:c_velocity}
+                \boldsymbol{\dot c} = \boldsymbol{B}\boldsymbol{\dot \theta}
+        \end{equation}
+    \item Macierz masowa układu
+        \begin{equation}
+            \label{eq:mass_matrix}
+                \boldsymbol{M} = \boldsymbol{diag}(m_1, m_1,J_z,m_2,m_2,J_z,m_3,m_3,J_z,m_4,m_4,J_z)
+        \end{equation}
+    \item Wektor przyłożonych obciążeń do układu $\prescript{(a)}{}{\boldsymbol{h}}$
+        \begin{equation}
+            \label{eq:h_applied}
+                \prescript{(a)}{}{\boldsymbol{h}} = \begin{bmatrix}
+                                                0 & 0 & \tau_1 &\boldsymbol{0}_{3\times1} &\boldsymbol{0}_{3\times1}&0&0 &\tau_2
+                                                \end{bmatrix}
+        \end{equation}
+    \item Macierz masowa widziana z perspektywy przegubów
+        \begin{equation}
+            \label{eq:mass_matrix_joint}
+                \boldsymbol{M}_{joint} = \boldsymbol{B}'\boldsymbol{M}\boldsymbol{B}
+        \end{equation}
+    \item Macierz przyłożonych obciążeń widocznych z perspektywy przegubów
+        \begin{equation}
+            \label{eq:h_applied_joint}
+                \prescript{(a)}{}{\boldsymbol{h}}_{joint} = \boldsymbol{B}'(\prescript{(a)}{}{\boldsymbol{h}} -\boldsymbol{M}\boldsymbol{\dot B}\boldsymbol{\dot \theta})
+        \end{equation}
+
+    \item Równanie pętli kinematycznej z której wyznaczono macierz Jakobiego w układzie absolutnym
+        \begin{equation}
+            \label{eq:vector_loop}
+            \prescript{\star}{}{\boldsymbol{\Phi}} = \boldsymbol{r}_2^C - \boldsymbol{r}_3^C = \boldsymbol{r}_2 + \boldsymbol{s}_2^C-\boldsymbol{r}_3- \boldsymbol{s}_3^C
+        \end{equation}
+    \item Zróżniczkowane równanie pętli
+        \begin{equation}
+            \label{eq:vector_loop_differentiated}
+            \prescript{\star}{}{\boldsymbol{\dot \Phi}} = \boldsymbol{\dot r}_2 + \boldsymbol{\breve s}_2^C\dot \varphi_2-\boldsymbol{\dot r}_3- \boldsymbol{\breve s}_3^C\dot \varphi_3
+        \end{equation}
+
+    \item Z czego można odczytać macierz Jakobiego, dla wektora z \ref{eq:vector_c}
+        \begin{equation}
+            \label{eq:absolute_jacobain}
+                \prescript{\star}{}{\mathbf{D}}
+                = 
+                \begin{bmatrix}
+                \boldsymbol{0}_{2\times1} &  \boldsymbol{0}_{2\times1} & \boldsymbol{I}_{2\times1} &  \boldsymbol{\breve s}_2^C & \boldsymbol{-I}_{2\times1} & \boldsymbol{\breve s}_3^C &  \boldsymbol{0}_{2\times1} &  \boldsymbol{0}_{2\times1}
+                \end{bmatrix}
+        \end{equation}
+    \item W ogólności zachodzi zależność dla macierzy jakobiego we współrzędnych złączowych
+        \begin{equation}
+            \label{eq:C_matrix}
+                \mathbf{C} =  \prescript{\star}{}{\mathbf{D}}\mathbf{B}
+        \end{equation}
+    \item Po zróżniczkowaniu powyższego wyrażenia
+        \begin{equation}
+            \label{eq:c_dot_matrix}
+            \mathbf{\dot C}= \prescript{\star}{}{\mathbf{D}}\mathbf{\dot B} + \prescript{\star}{}{\mathbf{\dot D}}\mathbf{B}
+        \end{equation}
+    \item Ograniczenia na przyspieszenia przyjmują formę:
+        \begin{equation}
+        \label{eq:acceleration_constraint}
+            \prescript{\star}{}{\boldsymbol{\ddot\Phi}} = \mathbf{C}\boldsymbol{\ddot \theta}+\mathbf{\dot C}\boldsymbol{\dot \theta} = \boldsymbol{0}
+        \end{equation}
+    \item Następnie obliczona zostaje pochodna z Jakobianu absolutnego, która służy do policzenia pochodnej złączowej
+        \begin{equation}
+            \label{eq:absolutne_jacobian_differentiated}
+                \prescript{\star}{}{\mathbf{\dot D}}
+                =
+                \begin{bmatrix}
+                \boldsymbol{0}_{2\times1} &  \boldsymbol{0}_{2\times1} & \boldsymbol{0}_{2\times1} &  \boldsymbol{- s}_2^C \dot\varphi_2 & \boldsymbol{0}_{2\times1} & \boldsymbol{- s}_3^C \dot\varphi_3 &  \boldsymbol{0}_{2\times1} &  \boldsymbol{0}_{2\times1}
+                \end{bmatrix}
+        \end{equation}
+    \item Równanie ruchu
+        \begin{equation}
+            \label{eq:equation_of_motion}
+                \boldsymbol{M}_{joint}\boldsymbol{\ddot\theta} = \prescript{(a)}{}{\boldsymbol{h}_{joint}}+\mathbf{C}'\prescript{\star}{}{\boldsymbol{\lambda}}
+        \end{equation}
+    \item Łącząc ograniczenie na przyspieszenie z równania\ref{eq:acceleration_constraint} i równanie ruchu \ref{eq:equation_of_motion} orzymujemy układ równań:
+        \begin{equation}
+            \label{eq:DAE_set_of_equations}
+            \begin{bmatrix}
+                \boldsymbol{M}_{joint}&\mathbf{C}'\\
+                \mathbf{C}&\boldsymbol{0}
+            \end{bmatrix}
+            =
+            \begin{bmatrix}
+                \boldsymbol{\ddot\theta}\\
+                \prescript{\star}{}{\boldsymbol{\lambda}}
+            \end{bmatrix}
+            \begin{bmatrix}
+                \prescript{(a)}{}{\boldsymbol{h}_{joint}}\\
+                -\mathbf{\dot C}\boldsymbol{\dot \theta}
+            \end{bmatrix}
+        \end{equation}
+        
+        
+\end{itemize}
+
+\textcolor{red}{wymienić wzory wraz z opisem poszczególnych elementów można dodać wstęp do ogólnego zapisu przedstawionego w książce}
+
+%Należy napisać podstawy teoretyczne, odwołanie do formalizmu Nikravesha, potrzebne wzory i zależności do zrozumienia zagadnienia
+
+
+\section{Implementacja}
+\label{sec:implementacja_robot}
+
+Otrzymane wzory w poprzedniej sekcji użyto do rozwiązania problemu przedstwaionego na rys. \ref{fig;robot_rownolegly}. W podobnym układzie do poprzedniego podrozdziału na odpowiednich rysunkach zostaną przedstawione konkretne wielkości, które są niezbędne z perspektywy rozwiązania zadania prostego dynamiki w postaci \gls{DAE}. Na rysunku \ref{fig:robot_rownolegly_oznaczony} widać przyjęte zwroty lokalnych układów wspołrzędnych i niezbędnych zależności.
+
+\textcolor{red}{Tutaj opisać krok po kroku co wziąłem i jak użyłem, następnie powiedzieć że efektywnie na końcu otrzymuję funkcję, która zwraca:}
+
+\begin{equation}
+    \label{eq:system}
+        \boldsymbol{\ddot \theta} = f(\boldsymbol{\theta},\boldsymbol{\dot \theta}, \boldsymbol{u})
+\end{equation}
+gdzie wejściem do układu:
+\begin{equation}
+    \label{eq:u_in}
+        \boldsymbol{u} = 
+        \begin{bmatrix}
+            u_1\\u_2
+        \end{bmatrix}
+        =
+        \begin{bmatrix}
+            \tau_1\\\tau_2
+        \end{bmatrix}
+\end{equation}
+
+\textcolor{red}{Wstawić rysunki z zaznaczonymi odpowiednimi wielkościami, tak, aby było jasne dla odbiorcy, co jest czym i skąd wynika, dlaczego tak a nie inaczej, jak została rozwiązana kwestia warunków początkowych, stabilizacja więzów, czyli również do tego metodyka całkowania równań i fakt, że na wyjściu otrzymuję cały wektor [theta1, theta2, theta3, theta4]}
+
+%Miejsce w którym opisuję dokładnie swój układ mechaniczny, podaję dokładne wartośći (można zrobić na początku sekcji teoretycznej, żeby było jasne skąd i co się wzięło). Miejsce w którym opowiadam o swoim mechanizmie i rozbijam go na części pierwsze, przedstawiam jak dobrałem układy współrzędnych itd.
+
+%Opisać rozwiązanie rozwiązanie zadania odwrotnego kinematyki dla wyznaczenia warunków domknięcia petli, pokazać co robi mój kod w matlabie przy wywołaniu funkcji obliczającej wejście
+
+%Opowiedzieć o stabilizacji więzów Baumagrtem i pokazać wyniki tego

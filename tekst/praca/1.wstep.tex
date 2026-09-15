@@ -1,0 +1,69 @@
+\chapter{Introduction}
+\label{ch:wstep}
+
+\section{Introduction and Background}
+
+Modern robotics imposes increasingly stringent requirements on control systems regarding precision and adaptation to uncertain operating conditions. For years, Model Predictive Control (\textbf{MPC}) has been the industrial standard. Despite its effectiveness, classical MPC possesses a significant drawback: it requires an accurate mathematical model of the controlled plant. In the case of complex nonlinear systems, such as parallel robots, the identification of physical parameters is a difficult, time-consuming process, often prone to errors that negatively affect control performance.
+
+These limitations have motivated the development of \textit{Data-Driven Control} methods. This paradigm assumes bypassing the explicit stage of modeling the object's physics in favor of utilizing raw historical data (input-output trajectories). One of the most promising algorithms in this field is \textbf{DeePC} (\textit{Data-Enabled Predictive Control}), introduced in 2019 \cite{deepc}. This method combines the mathematical rigor of classical prediction with the flexibility of a model-free approach.
+
+However, a key challenge in the DeePC method is the appropriate selection of data and the ability to control nonlinear systems in the presence of noise occurring in measurement channels. The literature proposes various strategies to address these issues—ranging from methods based on strong regularization (\textbf{Regularized DeePC}) to methods based on local data selection (\textbf{Selective DeePC}, also known in the literature as \textit{Select-DeePC} \cite{choosewisely}). This thesis focuses on investigating and comparing these two strategies in the context of controlling a robot with complex kinematics, as representative approaches fitting within the current state of knowledge regarding data-driven methods.
+
+\section{Positioning the DeePC Method Against Model-Based and Data-Driven Solutions}
+
+Choosing an appropriate control strategy for robotic manipulators involves balancing the required knowledge of the system (model) and the amount of data necessary to tune the controller. This problem is typically considered in the literature within two extreme paradigms: model-based control and data-driven control \cite{deepc, tatiewski, quad, ethzurich}.
+
+\subsection{Limitations of Model-Based Methods (MPC)}
+One of the dominant solutions in advanced control systems is classical MPC, which allows for the explicit inclusion of constraints on control signals and state variables, thereby ensuring a high level of operational safety \cite{nmpc}. However, the effectiveness of MPC is highly dependent on the quality of the available parametric model of the plant \cite{ethzurich}.
+
+These limitations constitute a significant motivation for developing methods that retain the advantages of predictive control while eliminating the need for explicit modeling of the plant physics. This leads toward data-driven approaches, such as the DeePC algorithm \cite{deepc}.
+
+\subsection{Challenges of Pure Data-Driven Methods (RL)}
+At the opposite end of the spectrum are Reinforcement Learning (RL) methods, which completely forgo a parametric model in favor of optimizing a reward-based control policy. Although this approach eliminates the system identification problem, several critical drawbacks arise in robotic applications \cite{deepc, ethzurich}:
+\begin{itemize}
+    \item \textbf{Lack of safety guarantees:} RL methods inherently do not account for hard state and control constraints in a deterministic manner, which is crucial in MPC.
+    \item \textbf{Low sample efficiency:} These algorithms require massive training datasets, which is time-consuming and costly in real-world experiments.
+    \item \textbf{Lack of reproducibility:} Results are often highly sensitive to the choice of hyperparameters and the random exploration process, making stability verification difficult.
+\end{itemize}
+
+\subsection{DeePC as a Synthesis of MPC and Data-Driven Advantages}
+The \textit{Data-enabled Predictive Control} algorithm was chosen as the subject of research in this thesis because it bridges the gap between the aforementioned approaches. Unlike RL, DeePC is based on a receding horizon predictive control structure, allowing for the explicit inclusion of safety constraints (similar to MPC) \cite{nmpc, deepc, ethzurich}.
+
+The key innovation of DeePC, however, is the replacement of the parametric model (required in methods described, e.g., in \cite{tatiewski, nmpc}) with Hankel matrices constructed from raw input-output trajectories. Based on Willems' Fundamental Lemma and behavioral systems theory, DeePC allows for predicting the future behavior of the system directly from historical data \cite{deepc, WILLEMS2005325}.
+
+\section{Aim and Scope of the Thesis}
+
+The main objective of this diploma thesis is the implementation and comparative analysis of two variants of the data-driven predictive control algorithm (\textbf{DeePC}) applied to the position control of a parallel robot with two degrees of freedom.
+
+The following were analyzed:
+\begin{itemize}
+    \item \textbf{Regularized DeePC:} The classical approach, utilizing the full available data history with the application of regularization terms for noise filtration.
+    \item \textbf{Selective DeePC:} A modified approach, utilizing a data selection mechanism (local, implicit linearization) to more accurately represent the object's behavior at the current operating point.
+\end{itemize}
+
+\textbf{The specific objectives of the thesis include:}
+\begin{enumerate}
+    \item Development of a simulation model of a parallel robot (five-bar linkage type) in joint coordinates and its validation.
+    \item Implementation of the \textbf{Regularized DeePC} algorithm and the \textbf{Selective DeePC} algorithm in the MATLAB environment.
+    \item Conducting simulation studies for both methods under ideal conditions (no noise) and in the presence of measurement disturbances, for various motion trajectories (lemniscate, polygon).
+    \item Sensitivity analysis of the algorithms to key hyperparameters (prediction/initialization horizons, regularization coefficients, number of samples).
+    \item Comparison of both methods in terms of tracking precision, stability, control signal characteristics, and computational complexity.
+\end{enumerate}
+
+\section{System Architecture}
+\label{sec:architektura_systemu}
+
+To facilitate the analysis of the subsequent parts of the thesis and to understand the interactions occurring between individual elements of the project, a conceptual diagram presented in Figure \ref{fig:najwazniejszy_graf} was developed. It illustrates the signal flow in a closed-loop feedback system with the following components:
+\begin{itemize}
+    \item \textbf{Reference trajectory} defines the expected behavior of the robot ($\boldsymbol{y}_{ref}$), serving as the target for the control system.
+    \item \textbf{Predictive controller (DeePC)} performs the decision-making role. Using the historical data library (represented by the matrix $\mathcal{H}$) and current feedback measurements, it determines the optimal control signal ($\boldsymbol{u}_{opt}$).
+    \item \textbf{Dynamic model} constitutes the virtual control plant. It receives the calculated torques and then—based on the equations of motion—determines the mechanical response of the system (accelerations $\boldsymbol{\ddot \theta}$).
+    \item \textbf{Simulation environment (Integrator)} transforms the system of equations into motion, updating the robot's state (positions and velocities—$\boldsymbol{\theta}$ and $\boldsymbol{\dot \theta}$) and generating a new measurement vector ($\boldsymbol{y}$), which closes the control loop.
+\end{itemize}
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=1\linewidth]{rysunki/1.wstep/Graf_cala_praca (3) (3).drawio.pdf}
+    \caption{Conceptual diagram of the implemented control system architecture}
+    \label{fig:najwazniejszy_graf}
+\end{figure}

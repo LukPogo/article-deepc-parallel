@@ -1,0 +1,53 @@
+\begin{easyappendix}{Details of the Derivation of Kinematic Matrices}
+\label{app:szczegoly_kinematyczne}
+
+This appendix collects detailed definitions of the vectors and matrices necessary for the numerical implementation of the model presented in Chapter \ref{ch:model_dynamiczny}.
+
+\paragraph{Velocity Transformation Matrix and Geometric Vectors:}
+
+The matrix $\mathbf{B}$, relating absolute velocities to joint velocities, results from the geometry of the open chains (formed after cutting the loop at point C) and takes the block form:
+\begin{equation}
+    \mathbf{B} = \begin{bmatrix}
+        \boldsymbol{R_{11}} & \boldsymbol{0} &\boldsymbol{0} &\boldsymbol{0}\\
+        \boldsymbol{R}_{21} & \boldsymbol{R}_{22} & \boldsymbol{0} & \boldsymbol{0}\\ 
+        \boldsymbol{0} & \boldsymbol{0}&\boldsymbol{R}_{33}&\boldsymbol{R}_{34}\\
+        \boldsymbol{0} & \boldsymbol{0} & \boldsymbol{0} & \boldsymbol{R}_{44}
+     \end{bmatrix} \in \mathbb{R}^{12 \times 4}
+\end{equation}
+The matrix elements are columns $\boldsymbol{R}_{ij} = [\boldsymbol{\breve d}_{ij}^\mathrm{T}, 1]^\mathrm{T}$, where the $\breve{(\cdot)}$ operator denotes a $90^\circ$ rotation of the vector. The vectors $\boldsymbol{d}_{ij}$ describe the positions of the links relative to the axes of rotation and are defined as follows:
+
+\begin{align}
+    \boldsymbol{\breve d}_{11} &= -\boldsymbol{\breve s}_1^A \nonumber \\
+    \boldsymbol{\breve d}_{21} &= -\boldsymbol{\breve s}_1^A+\boldsymbol{\breve s}_1^B-\boldsymbol{\breve s}_2^B \nonumber \\
+    \boldsymbol{\breve d}_{22} &= -\boldsymbol{\breve s}_2^B \label{eq:app_vectors_d}\\
+    \boldsymbol{\breve d}_{33} &= -\boldsymbol{\breve s}_3^D \nonumber \\
+    \boldsymbol{\breve d}_{34} &= -\boldsymbol{\breve s}_4^E+\boldsymbol{\breve s}_4^D-\boldsymbol{\breve s}_3^D \nonumber \\
+    \boldsymbol{\breve d}_{44} &= -\boldsymbol{\breve s}_4^E \nonumber
+\end{align}
+
+\paragraph{Derivative of the Velocity Transformation Matrix:}
+
+To determine the inertial forces (term $\mathbf{\dot C}\boldsymbol{\dot \theta}$), knowledge of the time derivative of matrix $\mathbf{B}$ is required. Matrix $\mathbf{\dot B}$ preserves the block structure of the original matrix:
+\begin{equation}
+    \mathbf{\dot B} = \begin{bmatrix}
+        \boldsymbol{\dot R}_{11} & \boldsymbol{0} &\boldsymbol{0} &\boldsymbol{0}\\
+        \boldsymbol{\dot R}_{21} & \boldsymbol{\dot R}_{22} & \boldsymbol{0} & \boldsymbol{0}\\ 
+        \boldsymbol{0} & \boldsymbol{0}&\boldsymbol{\dot R}_{33}&\boldsymbol{\dot R}_{34}\\
+        \boldsymbol{0} & \boldsymbol{0} & \boldsymbol{0} & \boldsymbol{\dot R}_{44}
+     \end{bmatrix}
+\end{equation}
+\\
+\\
+\\
+where the elements $\boldsymbol{\dot R}_{ij} = [\boldsymbol{\dot{\breve d}}_{ij}^{\mathrm{T}}, 0]^\mathrm{T}$. The derivatives of the geometric vectors $\boldsymbol{\dot{\breve d}}_{ij}$, determined considering the angular velocities of the links, take the explicit form:
+
+\begin{align}
+    \boldsymbol{\dot{\breve{d}}}_{11} &= \boldsymbol{s}_1^A\dot \varphi_1 \nonumber \\
+    \boldsymbol{\dot{\breve{d}}}_{21} &= \boldsymbol{s}_1^A \dot \varphi_1 - \boldsymbol{s}_1^B \dot \varphi_1 + \boldsymbol{s}_2^B \dot \varphi_2 \nonumber \\
+    \boldsymbol{\dot{\breve d}}_{22} &= \boldsymbol{s}_2^B \dot \varphi_2 \label{eq:app_vectors_d_dot} \\
+    \boldsymbol{\dot{\breve d}}_{33} &= \boldsymbol{s}_3^D \dot \varphi_3 \nonumber \\
+    \boldsymbol{\dot{\breve d}}_{34} &= \boldsymbol{s}_4^E \dot \varphi_4 - \boldsymbol{s}_4^D\dot \varphi_4 + \boldsymbol{s}_3^D\dot \varphi_3 \nonumber \\
+    \boldsymbol{\dot{\breve d}}_{44} &= \boldsymbol{s}_4^E\dot \varphi_4 \nonumber
+\end{align}
+
+\end{easyappendix}

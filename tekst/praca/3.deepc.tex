@@ -1,0 +1,193 @@
+\chapter{Synthesis of the Predictive Controller}
+\label{ch:deepc}
+
+\section{Classical Model Predictive Control -- MPC}
+\label{subs:mpc}
+
+Classical MPC minimizes a receding-horizon cost function subject to system dynamics and actuator constraints \cite{nmpc}. For a linear time-invariant (LTI) system described by:
+\begin{align}
+    \boldsymbol{x}_{k+1} &= \boldsymbol{A}\boldsymbol{x}_k + \boldsymbol{B} \boldsymbol{u}_k 
+    \label{eq:statempc}
+    \\
+    \boldsymbol{y}_k &= \boldsymbol{C} \boldsymbol{x}_k + \boldsymbol{D} \boldsymbol{u}_k
+    \label{eq:outmpc}
+\end{align}
+where $\boldsymbol{x} \in \mathbb{R}^n$, $\boldsymbol{u} \in \mathbb{R}^m$, $\boldsymbol{y} \in \mathbb{R}^p$, the optimization problem over prediction horizon $N$ takes the form:
+\begin{equation}
+    \min_{\boldsymbol{u},\boldsymbol{x},\boldsymbol{y}} \sum_{k=0}^{N-1} \left( \left\| \boldsymbol{y}_k - \boldsymbol{r}_{k} \right\|_{\boldsymbol{Q}}^2 + \left\| \boldsymbol{u}_k \right\|_{\boldsymbol{R}}^2 \right)
+    \label{eq:costmpc}
+\end{equation}
+subject to:
+\begin{align}
+    \boldsymbol{u}_k &\in \mathcal{U}, \quad \forall k \in \{0, \ldots, N-1\}
+    \label{eq:umpc}
+    \\
+    \boldsymbol{y}_k &\in \mathcal{Y}, \quad \forall k \in \{0, \ldots, N-1\}
+    \label{eq:ympc}
+\end{align}
+
+Despite its effectiveness, MPC requires a parametric model identified in a separate offline stage — a process that does not guarantee optimality from the control perspective \cite{markovsky2023data}. The DeePC algorithm eliminates this stage by operating directly on raw measurement data as a non-parametric behavioral representation of the system.
+
+\section{Foundations of Behavioral Control Theory}
+
+The foundation of the DeePC algorithm is the behavioral approach to systems theory, in which a dynamic system is defined as the set of all permissible input-output trajectories \cite{WILLEMS2005325}. Key concepts enabling such a representation are defined below \cite{quad, ethzurich, markovsky2023data, deepc}.
+
+\textbf{Hankel Matrix} $\mathcal{H}$ -- for a discrete signal $\boldsymbol{w} = \begin{bmatrix} \boldsymbol{w}_1 & \boldsymbol{w}_2 & \dots & \boldsymbol{w}_T \end{bmatrix}^\mathrm{T}$ of length $T$, the Hankel matrix of depth $L = T_{ini} + N$ is defined as:
+\begin{equation}
+    \label{eq:hankel_matrix}
+    \mathcal{H}_L(\boldsymbol{w}) = 
+    \begin{bmatrix}
+        \boldsymbol{w}_1 & \boldsymbol{w}_2 & \cdots & \boldsymbol{w}_{T-L+1}\\
+        \boldsymbol{w}_2 & \boldsymbol{w}_3 & \cdots & \boldsymbol{w}_{T-L+2}\\
+        \vdots & \vdots & \ddots & \vdots\\
+        \boldsymbol{w}_L & \boldsymbol{w}_{L+1} & \cdots & \boldsymbol{w}_T
+    \end{bmatrix}
+\end{equation}
+
+\textbf{Mosaic Hankel Matrix} -- for $K$ independent datasets $\boldsymbol{w}^{d_{1}}, \dots, \boldsymbol{w}^{d_{K}}$, the mosaic matrix is formed by horizontal concatenation:
+\begin{equation}
+    \label{eq:mosaic_hankel}
+    \mathcal{H}_{mos}(\boldsymbol{w}^d) = 
+    \begin{bmatrix}
+        \mathcal{H}_L(\boldsymbol{w}^{d_{1}}) & \mathcal{H}_L(\boldsymbol{w}^{d_{2}}) & \cdots & \mathcal{H}_L(\boldsymbol{w}^{d_{K}})
+    \end{bmatrix}
+\end{equation}
+
+\textbf{Persistency of Excitation (PE)} -- an input signal $\boldsymbol{u}$ is sufficiently exciting of order $L$ if $\mathcal{H}_L(\boldsymbol{u})$ has full row rank \cite{ethzurich}. For a system of order $n$, the input must be sufficiently exciting of order $T_{ini} + N + n$, requiring the total dataset length to satisfy:
+\begin{equation}
+    T \ge (m+1)(T_{ini} + N + n) - 1
+\end{equation}
+
+\textbf{Willems' Fundamental Lemma} -- for an LTI system with a sufficiently exciting input of order $T_{ini} + N + n$, the columns of $\mathcal{H}_L$ span the space of all possible input-output trajectories of length $L = T_{ini} + N$ \cite{deepc, WILLEMS2005325}. Consequently, any future system trajectory can be expressed as a linear combination of the columns of this matrix, without identifying the state matrices $\boldsymbol{A}, \boldsymbol{B}, \boldsymbol{C}, \boldsymbol{D}$.
+
+\section{Data-Driven Control Algorithm -- DeePC}
+\label{sec:deepc_algo}
+
+The non-parametric model of the system is constructed from historical data $\boldsymbol{u}^d$, $\boldsymbol{y}^d$ of length $T$. The Hankel matrix is partitioned along the row dimension into past (index $p$, depth $T_{ini}$) and future (index $f$, depth $N$) blocks:
+\begin{equation}
+    \label{eq:data_matrix_deepc}
+    \mathcal{H} = \begin{bmatrix}
+        \mathcal{H}_{p} \\ \hline \mathcal{H}_{f}
+    \end{bmatrix} = 
+    \begin{bmatrix}
+         \begin{pmatrix} \boldsymbol{U}_p \\ \boldsymbol{Y}_p \end{pmatrix} \\[1em]
+         \hline
+         \begin{pmatrix} \boldsymbol{U}_f \\ \boldsymbol{Y}_f \end{pmatrix}
+    \end{bmatrix}
+\end{equation}
+as illustrated in Figure \ref{fig:deepc_matrix_structure}.
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=0.6\linewidth]{rysunki/3.deepc/graf_deepc (3).drawio.pdf}
+    \caption{Data matrix structure used in the DeePC algorithm. The gray area includes $T_{ini}$ rows responsible for establishing the initial state (past), while the white area contains $N$ rows defining possible future evolutions of the system. Each column represents one physically realizable system trajectory of length $L = T_{ini} + N$.}
+    \label{fig:deepc_matrix_structure}
+\end{figure}
+
+\subsection{Trajectory Prediction and the Decision Variable $\boldsymbol{g}$}
+
+A decision vector $\boldsymbol{g} \in \mathbb{R}^{T-L+1}$ is introduced, weighting the columns of the data matrix. At each control iteration, the sought trajectory must satisfy:
+\begin{equation}
+\label{eq:deePC_regression}
+\begin{bmatrix}
+    \boldsymbol{U}_p \\
+    \boldsymbol{Y}_p \\
+    \boldsymbol{U}_f \\
+    \boldsymbol{Y}_f
+    \end{bmatrix}
+    \boldsymbol{g} =
+    \begin{bmatrix}
+    \boldsymbol{u}_{ini} \\
+    \boldsymbol{y}_{ini} \\
+    \boldsymbol{u} \\
+    \boldsymbol{y}
+    \end{bmatrix}
+\end{equation}
+where $\boldsymbol{u}_{ini}$, $\boldsymbol{y}_{ini}$ contain the last $T_{ini}$ measured samples (with $T_{ini} \ge n$ to uniquely define the initial state \cite{ethzurich}), and $\boldsymbol{u}$, $\boldsymbol{y}$ are the future control and output sequences over horizon $N$.
+
+\subsection{Formulation of the Optimization Problem}
+
+The DeePC control problem is formulated as a quadratic programming (QP) task:
+\begin{equation}
+    \label{eq:deepc_optimization}
+    \begin{aligned}
+    \min_{\boldsymbol{g}, \boldsymbol{u}, \boldsymbol{y}} \quad & \sum_{k=0}^{N-1} \left( \| \boldsymbol{y}_k - \boldsymbol{r}_{k} \|_{\boldsymbol{Q}}^2 + \| \boldsymbol{u}_k \|_{\boldsymbol{R}}^2 \right) \\
+    \text{s.t.} \quad & \begin{bmatrix} \boldsymbol{U}_p \\ \boldsymbol{Y}_p \\ \boldsymbol{U}_f \\ \boldsymbol{Y}_f \end{bmatrix} \boldsymbol{g} = \begin{bmatrix} \boldsymbol{u}_{ini} \\ \boldsymbol{y}_{ini} \\ \boldsymbol{u} \\ \boldsymbol{y} \end{bmatrix} \\
+    & \boldsymbol{u}_k \in \mathcal{U}, \quad \boldsymbol{y}_k \in \mathcal{Y}
+    \end{aligned}
+\end{equation}
+For LTI systems without noise, this formulation is mathematically equivalent to classical MPC \cite{ethzurich}. The algorithm operates in receding horizon mode: at each step $t$, the optimization (\ref{eq:deepc_optimization}) is solved and only the first element $\boldsymbol{u}_{opt}(t) = \boldsymbol{u}^*_0 = \boldsymbol{U}_f\boldsymbol{g}^*$ is applied to the plant (Figure \ref{fig:algorytm_deepc}).
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=1\linewidth]{rysunki/3.deepc/algorytm.drawio (2).pdf}
+    \caption{Block diagram of the DeePC controller operation in a closed loop.}
+    \label{fig:algorytm_deepc}
+\end{figure}
+
+\section{Robust Control for Noise and Nonlinearities -- Regularized DeePC}
+
+To address measurement noise and plant nonlinearities, the \textbf{Regularized DeePC} variant \cite{deepc, ethzurich} introduces a slack variable $\boldsymbol{\sigma}$ and regularization terms into the cost function:
+\begin{equation}
+    \label{eq:regularized}
+    \min_{\boldsymbol{g}, \boldsymbol{u}, \boldsymbol{y}, \boldsymbol{\sigma}} \sum_{k=0}^{N-1} \left( \| \boldsymbol{y}_k - \boldsymbol{r}_{k} \|_{\boldsymbol{Q}}^2 + \| \boldsymbol{u}_k \|_{\boldsymbol{R}}^2 \right) + \lambda_g \|\boldsymbol{g}\|_2^2 + \lambda_{\sigma} \|\boldsymbol{\sigma}\|^2_2
+\end{equation}
+where $\lambda_g$ prevents overfitting to measurement noise and improves numerical conditioning \cite{ethzurich, markovsky2023data}, and $\lambda_{\sigma}$ controls the degree of trust in current measurements. The slack variable modifies the initialization constraint:
+\begin{equation}
+\begin{bmatrix}
+    \boldsymbol{U}_p \\
+    \boldsymbol{Y}_p \\
+    \boldsymbol{U}_f \\
+    \boldsymbol{Y}_f
+    \end{bmatrix}
+    \boldsymbol{g} =
+    \begin{bmatrix}
+    \boldsymbol{u}_{ini} \\
+    \boldsymbol{y}_{ini} + \boldsymbol{\sigma} \\
+    \boldsymbol{u} \\
+    \boldsymbol{y}
+    \end{bmatrix}
+    \label{eq:regularized_set}
+\end{equation}
+allowing the linear combination of historical data to reproduce the measurement $\boldsymbol{y}_{ini}$ within the accuracy of $\boldsymbol{\sigma}$. Quadratic ($l_2$) regularization was adopted, keeping the problem as a standard QP task while ensuring practical exponential stability in the presence of noise \cite{markovsky2023data}.
+
+\section{Local Data Linearization -- Selective DeePC}
+\label{sec:selective_deepc}
+
+The \textbf{Selective DeePC} method \cite{choosewisely} addresses the fundamental limitation of Regularized DeePC when applied to highly nonlinear plants: operating on the full data library forces the algorithm to treat the system as a globally averaged LTI model, introducing significant modeling errors as the robot configuration changes. Its essence is the construction of a local non-parametric model at each control iteration by selecting only those columns of the data matrix that most closely resemble the current system state and the given control objective.
+
+Denoting each column of the Hankel matrix as $\boldsymbol{h}_i$, the database vector and current state vector are defined as:
+\begin{itemize}
+    \item \textbf{Database vector} ($\boldsymbol{h}_i$) -- the $i$-th column of the Hankel matrix, consisting of historical inputs, outputs, and future outputs:
+    \begin{equation}
+        \boldsymbol{h}_i = 
+        \begin{bmatrix}
+        \boldsymbol{u}_{{ini}, i} \\
+            \boldsymbol{y}_{{ini}, i} \\
+            \boldsymbol{y}_{f, i}
+        \end{bmatrix}
+    \end{equation}
+    
+    \item \textbf{Current state vector} ($\boldsymbol{\tilde{h}}$) -- constructed at each control step from current measurements and the reference trajectory:
+    \begin{equation}
+        \boldsymbol{\tilde{h}} = 
+        \begin{bmatrix}
+            \boldsymbol{u}_{{ini},~{current}} \\
+            \boldsymbol{y}_{{ini},~{current}} \\
+            \boldsymbol{r}_{{future}}
+        \end{bmatrix}
+    \end{equation}
+\end{itemize}
+
+At each sampling step, the selection proceeds as follows:
+\begin{enumerate}
+    \item Calculation of the Euclidean distance $d_i$ between $\boldsymbol{\tilde{h}}$ and each column of the data library:
+    \begin{equation}
+        d_i = \| \boldsymbol{h}_i - \boldsymbol{\tilde{h}} \|, \quad \text{for } i = 1, \dots, M
+    \end{equation}
+    \item Sorting indices $i$ by increasing $d_i$.
+    \item Selecting $N_{cols}$ nearest-neighbor columns best representing the current dynamics.
+    \item Construction of a local Hankel matrix $\mathcal{\tilde H}$ from the selected columns.
+\end{enumerate}
+
+The matrix $\mathcal{\tilde H}$ is substituted into (\ref{eq:regularized}) in place of the full data matrix, reducing the dimension of $\boldsymbol{g}$ to $N_{cols}$ and improving control quality through local approximation of the nonlinear dynamics.

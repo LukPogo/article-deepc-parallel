@@ -1,0 +1,108 @@
+% !TEX program = pdflatex
+% !TeX encoding = utf8
+% !TeX spellcheck = pl-PL
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Wybierz rodzaj pracy dyplomowej oraz wydział
+% Pick thesis type and faculty
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass[thesis=inz,faculty=mel]{EE-dyplom} 
+
+% thesis=[inz|mgr|bsc|msc]
+%  * inz - praca inżynierska
+%  * mgr - praca magisterska
+%  * bsc - bachelor thesis
+%  * msc - master thesis
+
+% Skróty nazw wydziałów zgodne z domenami internetowymi
+% Abbreviations of Faculties according to Internet subdomains
+% faculty=[
+%	arch,
+%	gik,
+%	ee,
+%	wip
+%	]
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Konfiguracja - do personalizacji
+% Configuration - to be personalized
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\instytut{Instytut Badawczy Zjednoczonych Przedsiębiorstw Elektronowych}
+\kierunek{Robotyka i Automatyka}
+\specjalnosc{Robotyka}
+\title{Sterowanie predykcyjne robotem równoległym na podstawie danych}
+\engtitle{Data-enabled Predictive Control of a Parallel Robot}
+\album{327709}
+\author{Łukasz Pogorzelski}
+\promotor{dr hab. inż. Paweł Malczyk, prof. uczelni}
+\date{2026}
+\longdate{2026-01-03}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Streszczenie pracy i abstract.
+% In case of thesis in English swap the order - English version goes first.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\streszczeniepracy{
+Niniejsza praca dyplomowa porusza zagadnienie sterowania predykcyjnego opartego na danych (Data-enabled Predictive Control -- DeePC) w zastosowaniu do robota równoległego o dwóch stopniach swobody. Głównym celem pracy było zbadanie skuteczności metod sterowania, które eliminują konieczność jawnej identyfikacji modelu parametrycznego na rzecz wykorzystania surowych danych historycznych trajektorii wejścia-wyjścia.
+
+W pierwszej części pracy opracowano model dynamiczny manipulatora typu pięciobok przegubowy, wykorzystując metodę przecięcia pętli kinematycznej (metoda cut-joint) i formułując równania we współrzędnych złączowych. Następnie poprawność modelu zweryfikowano z rozwiązaniem referencyjnym w specjalistycznym oprogramowaniu uzyskując wysoką zgodność rezultatów symulacji.
+
+W części badawczej zaimplementowano i porównano dwa warianty algorytmu: metodę \mbox{Regularized DeePC}, wykorzystującą pełną historię danych oraz zmodyfikowaną metodę Selective DeePC, umożliwiającą lokalny wybór danych pomiarowych. Badania symulacyjne przeprowadzono w środowisku MATLAB dla zróżnicowanych trajektorii (lemniskata Gerona, wielobok), zarówno w warunkach idealnych, jak i w obecności szumu pomiarowego.
+
+Analiza wyników wykazała fundamentalne różnice w działaniu obu metod. Algorytm \mbox{Regularized} DeePC cechuje się wysoką stabilnością i gładkością sygnału sterującego, jednak w warunkach zakłóceń wykazuje tendencję do generowania uchybów statycznych i ,,ścinania'' ostrych zakrętów. Z kolei metoda Selective DeePC zapewnia lepsze odwzorowanie geometrii trajektorii i szybszą reakcję układu, co odbywa się jednak kosztem mniejszej stabilności i występowania oscylacji w sygnale sterującym.
+
+Kluczowym wnioskiem jest wykazanie przewagi metody selektywnej pod względem wydajności obliczeniowej. Algorytm Selective DeePC pozwolił na siedmiokrotne skrócenie czasu obliczeń w stosunku do metody klasycznej (redukcja ze 100 ms do ok. 14 ms), co czyni go perspektywicznym rozwiązaniem dla systemów czasu rzeczywistego.
+
+}
+
+\slowakluczowe{robot równoległy, współrzędne złączowe, regulacja predykcyjna, DeePC, \mbox{Data-enabled} Predictive Control}
+
+\thesisabstract{
+This thesis addresses the issue of Data-enabled Predictive Control (DeePC) applied to a parallel robot with two degrees of freedom. The main objective of the thesis was to investigate the effectiveness of control methods that eliminate the need for explicit parametric model identification in favor of using raw historical input-output data trajectories.
+
+In the first part of the thesis, a dynamic model of a five-bar linkage manipulator was developed using the cut-joint method in joint coordinates. Subsequently, the model's correctness was validated against a reference solution in specialized software, achieving high simulation consistency.
+
+In the research part, two variants of the algorithm were implemented and compared: the classic Regularized DeePC, utilizing the full data history with regularization, and the modified Selective DeePC, based on a local data selection mechanism. Simulation studies were conducted in the MATLAB environment for various trajectories (Gerono lemniscate, polygon), both under ideal conditions and in the presence of measurement noise.
+
+Analysis of the results revealed fundamental differences in the performance of both methods. The Regularized DeePC algorithm is characterized by high stability and smoothness of the control signal; however, under disturbance conditions, it tends to generate static errors and "cut" sharp corners. In turn, the Selective DeePC method ensures better trajectory geometry tracking and faster system response, but at the cost of lower stability and the occurrence of oscillations in the control signal.
+
+A key conclusion is the demonstration of the selective method's advantage in terms of computational efficiency. The Selective DeePC algorithm allowed for a sevenfold reduction in computation time compared to the classic method (a reduction from 100 ms to approx. 14 ms), making it a promising solution for real-time systems.} % end of abstract
+
+\thesiskeywords{parallel robot, joint coordinates, predictive control, DeePC, Data-enabled Predictive Control}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Tu zaczyna się dokument
+% Here is the beginning of the document
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+    % Strony nagłówkowe - musi być
+    % Headers - must exist
+    \frontpages
+    
+    % Tekst pracy - osobne pliki do edycji
+    % Thesis text - separate files for edition
+
+	\input{tekst/praca/1.wstep}
+    \input{tekst/praca/2.model_dynamiczny}
+    \input{tekst/praca/3.deepc}
+    \input{tekst/praca/4.rezultaty}
+    \input{tekst/praca/5.podsumowanie}
+
+    % Bibliografia - musi być, jest w pliku EE-dyplom.bib
+    % Bibliography - must exist, is in the file EE-dyplom.bib
+    \bibliografia
+
+    % Strony końcowe - można zakomentować, jeśli zbędne
+    % Additional pages - comment out if not needed
+    
+    % Wykaz symboli i skrótów - patrz opis w tekście przykładowym
+    %\glsaddall
+    %\acronymslist
+    % Spis rysunków
+    \listoffigures
+    % Spis tabel
+    \listoftables
+    % Załączniki (plik appendices.tex)
+    \easyappendices
+\end{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
