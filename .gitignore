@@ -22,3 +22,5 @@ Makefile
 **/*.sls
 **/*.swp
 **/*.toc
+**/*.gz
+
